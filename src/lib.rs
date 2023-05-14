@@ -1,6 +1,7 @@
 pub use app::TemplateApp;
 
 mod app;
+mod appui;
 mod views;
 use serde::{Deserialize, Serialize};
 
