@@ -5,23 +5,32 @@ impl TemplateApp {
     pub fn menu_bar_view(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         // Menu Bar
         egui::menu::bar(ui, |ui| {
-            // File Menu
-            #[cfg(not(target_arch = "wasm32"))]
+            // FILE Menu
             ui.menu_button("File", |ui| {
-                ui.separator();
+                // TODO install mod
 
+                ui.separator();
                 // Quit button
                 if ui.button("Quit").clicked() {
                     frame.close();
                 }
             });
 
+            // GAME menu
+            ui.menu_button("Game", |ui| {
+                if ui.button("Open config").clicked() {
+                    if let Some(cfg_path) = crate::get_openmwcfg() {
+                        if open::that(cfg_path).is_err() {
+                            self.toasts.error("Could not open openmw.cfg");
+                        }
+                    }
+                }
+            });
+
             // theme button on right
             ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                 global_dark_light_mode_switch(ui, &mut self.light_mode);
-
                 ui.label("Theme: ");
-                egui::warn_if_debug_build(ui);
 
                 egui::ComboBox::from_label("Scale: ")
                     .selected_text(format!("{:?}", self.scale))

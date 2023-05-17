@@ -13,6 +13,7 @@ impl eframe::App for TemplateApp {
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         ctx.set_pixels_per_point(f32::from(self.scale));
+        catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE);
 
         // if light mode is requested but the app is in dark mode, we enable light mode
         if self.light_mode && ctx.style().visuals.dark_mode {
@@ -32,6 +33,9 @@ impl eframe::App for TemplateApp {
                     ui.label("Version: ");
                     ui.separator();
                     ui.hyperlink("https://github.com/rfuzzo/omwmm");
+
+                    ui.separator();
+                    egui::warn_if_debug_build(ui);
                 });
             });
         });

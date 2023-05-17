@@ -1,11 +1,14 @@
-use std::time::Duration;
+use std::{path::Path, time::Duration};
 
-use crate::TemplateApp;
+use crate::{ModInfo, TemplateApp};
 
 impl TemplateApp {
     /// this view holds the downloads and esps
     pub fn combined_side_view(&mut self, ui: &mut egui::Ui) {
-        // downloads
+        // TODO tabs
+
+        // downloads view
+
         // library folder path
         ui.horizontal(|ui| {
             if let Some(p) = self.downloads_library.clone() {
@@ -40,14 +43,40 @@ impl TemplateApp {
                             )
                             .double_clicked()
                         {
-                            // TODO install mod
-                            self.toasts
-                                .success("Mod installed")
-                                .set_duration(Some(Duration::from_secs(5)));
+                            // install mod
+                            // extract to mod lib
+                            // add to mods
+                            if let Some(mods_lib) = self.mods_library.clone() {
+                                let mut install_path = Path::new(mods_lib.as_str()).join(filename);
+                                install_path.set_extension("");
+                                let mod_info = ModInfo {
+                                    enabled: false,
+                                    path: install_path.clone(),
+                                };
+
+                                if !self.mods.iter().any(|e| e.path == install_path) {
+                                    // TODO install mod
+
+                                    self.mods.push(mod_info);
+                                    self.toasts
+                                        .success("Mod installed")
+                                        .set_duration(Some(Duration::from_secs(3)));
+                                }
+                            } else {
+                                // TODO log
+                            }
                         }
                     }
                 }
             });
         }
+
+        // plugin view
+
+        // TODO plugin view
+        // plugins are assembled from the enabled mods
+        // and can still individually be enabled
+        // the enabled state is synced to the omw.cfg
+        // TODO caching to avoid IO reads per frame?
     }
 }
