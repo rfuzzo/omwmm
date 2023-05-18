@@ -53,16 +53,19 @@ fn get_openmwcfg() -> Option<PathBuf> {
     let os_str = std::env::consts::OS;
     match os_str {
         "linux" => {
-            todo!();
+            // default cfg for linux is at $HOME/.config/openmw
+            let preference_dir = dirs::config_dir().unwrap();
+            let cfg = preference_dir.join("openmw.cfg");
+            if cfg.exists() {
+                Some(cfg)
+            } else {
+                None
+            }
         }
         "macos" => {
-            // default cfg for mac is at $HOME/Library/Preferences/openmw
-            let home = dirs::home_dir().unwrap();
-            let cfg = home
-                .join("Library")
-                .join("Preferences")
-                .join("openmw")
-                .join("openmw.cfg");
+            // default cfg for mac is at /Users/Username/Library/Preferences/openmw
+            let preference_dir = dirs::preference_dir().unwrap();
+            let cfg = preference_dir.join("openmw").join("openmw.cfg");
             if cfg.exists() {
                 Some(cfg)
             } else {
@@ -70,7 +73,17 @@ fn get_openmwcfg() -> Option<PathBuf> {
             }
         }
         "windows" => {
-            todo!()
+            // default cfg for windows is at C:\Users\Username\Documents\my games\openmw
+            let preference_dir = dirs::document_dir().unwrap();
+            let cfg = preference_dir
+                .join("my games")
+                .join("openmw")
+                .join("openmw.cfg");
+            if cfg.exists() {
+                Some(cfg)
+            } else {
+                None
+            }
         }
         _ => None,
     }

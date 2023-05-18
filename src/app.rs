@@ -125,7 +125,7 @@ impl TemplateApp {
                             original_cfg.push(line);
                         }
                     } else if line.starts_with("content=") {
-                        // check vanilla
+                        // ignore vanilla esms
                         if line.ends_with("Morrowind.esm")
                             || line.ends_with("Bloodmoon.esm")
                             || line.ends_with("Tribunal.esm")
