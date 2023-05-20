@@ -19,7 +19,7 @@ impl TemplateApp {
             // GAME menu
             ui.menu_button("Game", |ui| {
                 if ui.button("Open config").clicked() {
-                    if let Some(cfg_path) = crate::get_openmwcfg() {
+                    if let Some(cfg_path) = common::get_openmwcfg() {
                         if open::that(cfg_path).is_err() {
                             self.toasts.error("Could not open openmw.cfg");
                         }

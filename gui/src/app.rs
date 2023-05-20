@@ -7,7 +7,8 @@ use std::{
 use egui_notify::Toasts;
 use log::{error, info, warn};
 
-use crate::{get_openmwcfg, get_plugins_in_folder, EScale, ModViewModel, PluginViewModel};
+use crate::{EScale, ModViewModel, PluginViewModel};
+use common::{get_openmwcfg, get_plugins_in_folder};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -157,15 +158,16 @@ impl TemplateApp {
                 }
 
                 // write data
-                if let Some(library) = self.mods_library.clone() {
+                if let Some(_library) = self.mods_library.clone() {
                     for m in &self.mods.iter().filter(|p| p.enabled).collect::<Vec<_>>() {
                         // TODO proper eol
                         // get full path
-                        let full_path = m.get_full_path(&library);
-                        let data_line = format!("data=\"{}\"\n", full_path.to_string_lossy());
+                        let data_line = format!("data=\"{}\"\n", m.full_name.to_string_lossy());
                         match file.write(data_line.as_bytes()) {
                             Ok(_) => {}
-                            Err(err) => warn!("Error writing plugin {}: {}", m.name, err),
+                            Err(err) => {
+                                warn!("Error writing plugin {}: {}", m.full_name.display(), err)
+                            }
                         }
                     }
                 }
@@ -215,7 +217,19 @@ impl TemplateApp {
         }
 
         // if the app mods are empty, we import the openmw.cfg
-        if self.mods.is_empty() {}
+        if self.mods.is_empty() {
+            if let Some(cfg_path) = common::get_openmwcfg() {
+                if let Some(info) = common::parse_cfg(cfg_path) {
+                    for data_path in info.data {
+                        // TODO handle vanilla dirs`
+                        self.mods.push(ModViewModel {
+                            full_name: data_path,
+                            enabled: false,
+                        })
+                    }
+                }
+            }
+        }
 
         // load the mod list and plugin list from the profiles folder
         let current_profile_dir = self.get_current_profile_dir();
@@ -225,7 +239,11 @@ impl TemplateApp {
             if let Ok(lines) = common::read_lines(&mods_list_path) {
                 for mod_name in lines.flatten() {
                     // update mods enabled state
-                    if let Some(info) = self.mods.iter_mut().find(|p| p.name == mod_name) {
+                    if let Some(info) = self
+                        .mods
+                        .iter_mut()
+                        .find(|p| p.full_name.to_string_lossy() == mod_name)
+                    {
                         info.enabled = true;
                     }
                 }
@@ -235,8 +253,8 @@ impl TemplateApp {
         // crawl mods and populate plugins list
         self.plugins.clear();
         for mod_info in self.mods.iter() {
-            if let Some(library) = self.mods_library.clone() {
-                let plugins = get_plugins_in_folder(&mod_info.get_full_path(&library));
+            if let Some(_library) = self.mods_library.clone() {
+                let plugins = get_plugins_in_folder(&mod_info.full_name);
                 for p in plugins {
                     if let Some(plugin_name) = p.file_name() {
                         self.plugins.push(PluginViewModel {
@@ -267,17 +285,17 @@ impl TemplateApp {
 
     /// serializes the mods to the profile
     pub(crate) fn update_profile_mods(&self) {
-        let mods_names_list: Vec<_> = self
+        let mods_paths_list: Vec<_> = self
             .mods
             .iter()
             .filter(|f| f.enabled)
-            .map(|e| format!("{}\n", e.name.clone()))
+            .map(|e| format!("{}\n", e.full_name.to_string_lossy()))
             .collect();
         // save the list to file
         let current_profile_dir = self.get_current_profile_dir();
         let mods_list_path = current_profile_dir.join("mods.txt");
         if let Ok(mut f) = fs::File::create(mods_list_path) {
-            for mod_name in mods_names_list {
+            for mod_name in mods_paths_list {
                 match f.write(mod_name.as_bytes()) {
                     Ok(_) => {}
                     Err(_err) => {

@@ -19,7 +19,7 @@ impl TemplateApp {
 
         // mods view
         // TODO the library path is useless if the mods are serialized :thonk:
-        if let Some(library) = self.mods_library.clone() {
+        if let Some(_library) = self.mods_library.clone() {
             // TODO mods view
             // this is the main view
             // it holds a list of installed mods (states of them vary per profile)
@@ -37,30 +37,22 @@ impl TemplateApp {
                             if ui.checkbox(&mut mod_info.enabled, "").changed() {
                                 is_any_changed = true;
                             }
-                            ui.label(
-                                mod_info
-                                    .get_full_path(&library)
-                                    .file_name()
-                                    .unwrap()
-                                    .to_string_lossy(),
-                            );
+                            ui.label(mod_info.full_name.file_name().unwrap().to_string_lossy());
                         })
                     });
                     r.response.context_menu(|ui| {
                         // uninstall mod
                         if ui.button("Uninstall").clicked() {
                             // TODO delete the mod from the mod library
-                            if mod_info.get_full_path(&library).exists() {
-                                match std::fs::remove_dir_all(
-                                    mod_info.get_full_path(&library).as_path(),
-                                ) {
+                            if mod_info.full_name.exists() {
+                                match std::fs::remove_dir_all(&mod_info.full_name) {
                                     Ok(_) => {
                                         self.toasts.success("Mod removed");
                                     }
                                     Err(err) => {
                                         log::error!(
                                             "failed to remove mod {}: {}",
-                                            mod_info.get_full_path(&library).display(),
+                                            mod_info.full_name.display(),
                                             err
                                         );
                                     }

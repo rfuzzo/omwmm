@@ -18,17 +18,17 @@ mod unit_tests {
         let (mut in_path, mut d, mut c) = get_cfg();
         let result = parse_cfg(in_path);
         assert!(result.is_some());
-        let Some((data_dirs ,plugin_names)) = result else { return };
-        assert_eq!(data_dirs.len(), d);
-        assert_eq!(plugin_names.len(), c);
+        let Some(info) = result else { return };
+        assert_eq!(info.data.len(), d);
+        assert_eq!(info.plugins.len(), c);
 
         // parse full cfg for data dirs
         (in_path, d, c) = get_cfg_full();
         let result = parse_cfg(in_path);
         assert!(result.is_some());
-        let Some((data_dirs ,plugin_names)) = result else { return };
-        assert_eq!(data_dirs.len(), d);
-        assert_eq!(plugin_names.len(), c);
+        let Some(info) = result else { return };
+        assert_eq!(info.data.len(), d);
+        assert_eq!(info.plugins.len(), c);
     }
 
     #[test]
@@ -38,11 +38,11 @@ mod unit_tests {
         assert!(in_path.exists());
         let result = parse_cfg(in_path);
         assert!(result.is_some());
-        let Some((data_dirs ,plugin_names)) = result else { return };
-        assert_eq!(data_dirs.len(), d);
-        assert_eq!(plugin_names.len(), c);
+        let Some(info) = result else { return };
+        assert_eq!(info.data.len(), d);
+        assert_eq!(info.plugins.len(), c);
         // create a manifest
-        let files = get_plugins(data_dirs, &plugin_names);
-        assert_eq!(files.len(), plugin_names.len());
+        let files = get_plugins(info.data, &info.plugins);
+        assert_eq!(files.len(), info.plugins.len());
     }
 }

@@ -34,13 +34,13 @@ mod integration_tests {
         // parse cfg for data dirs
         let result = parse_cfg(in_path);
         assert!(result.is_some());
-        let Some((data_dirs ,plugin_names)) = result else { return };
-        assert_eq!(data_dirs.len(), d);
-        assert_eq!(plugin_names.len(), c);
+        let Some(info) = result else { return };
+        assert_eq!(info.data.len(), d);
+        assert_eq!(info.plugins.len(), c);
 
         // create a manifest
-        let files = get_plugins(data_dirs, &plugin_names);
-        assert_eq!(files.len(), plugin_names.len());
+        let files = get_plugins(info.data, &info.plugins);
+        assert_eq!(files.len(), info.plugins.len());
 
         // now copy the actual files
         let mut manifest = omw_util::Manifest::default();
@@ -93,9 +93,9 @@ mod integration_tests {
         // check cfg
         let result = parse_cfg(p_out);
         assert!(result.is_some());
-        let Some((data_dirs ,plugin_names)) = result else { return };
-        assert_eq!(data_dirs.len(), d_out);
-        assert_eq!(plugin_names.len(), c_out);
+        let Some(info) = result else { return };
+        assert_eq!(info.data.len(), d_out);
+        assert_eq!(info.plugins.len(), c_out);
 
         // destroy test environment
         std::fs::remove_dir_all(test_env).expect("Failed destroy test env");

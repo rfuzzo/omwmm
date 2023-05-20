@@ -1,10 +1,15 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{self, BufRead},
     path::{Path, PathBuf},
 };
 
 use log::{error, info};
+
+pub struct ConfigInfo {
+    pub data: Vec<PathBuf>,
+    pub plugins: Vec<String>,
+}
 
 /// Returns an Iterator to the Reader of the lines of the file.
 pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -15,8 +20,78 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
+/// Returns the default openmw.cfg path if it exists, and None if not
+///
+/// # Panics
+///
+/// Panics if Home dir is not found in the OS
+pub fn get_openmwcfg() -> Option<PathBuf> {
+    let os_str = std::env::consts::OS;
+    match os_str {
+        "linux" => {
+            // default cfg for linux is at $HOME/.config/openmw
+            let preference_dir = dirs::config_dir().unwrap();
+            let cfg = preference_dir.join("openmw.cfg");
+            if cfg.exists() {
+                Some(cfg)
+            } else {
+                None
+            }
+        }
+        "macos" => {
+            // default cfg for mac is at /Users/Username/Library/Preferences/openmw
+            let preference_dir = dirs::preference_dir().unwrap();
+            let cfg = preference_dir.join("openmw").join("openmw.cfg");
+            if cfg.exists() {
+                Some(cfg)
+            } else {
+                None
+            }
+        }
+        "windows" => {
+            // default cfg for windows is at C:\Users\Username\Documents\my games\openmw
+            let preference_dir = dirs::document_dir().unwrap();
+            let cfg = preference_dir
+                .join("my games")
+                .join("openmw")
+                .join("openmw.cfg");
+            if cfg.exists() {
+                Some(cfg)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Get all plugins (esp, omwaddon, omwscripts) in a folder
+pub fn get_plugins_in_folder<P>(path: &P) -> Vec<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    // get all plugins
+    let mut results: Vec<PathBuf> = vec![];
+    if let Ok(plugins) = fs::read_dir(path) {
+        plugins.for_each(|p| {
+            if let Ok(file) = p {
+                let file_path = file.path();
+                if file_path.is_file() {
+                    if let Some(ext) = file_path.extension() {
+                        if ext == "esm" || ext == "esp" || ext == "omwaddon" || ext == "omwscripts"
+                        {
+                            results.push(file_path);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    results
+}
+
 /// Parses the omwcfg and returns the data directories and content files
-pub fn parse_cfg(cfg_path: PathBuf) -> Option<(Vec<PathBuf>, Vec<String>)> {
+pub fn parse_cfg(cfg_path: PathBuf) -> Option<ConfigInfo> {
     let mut data_dirs: Vec<PathBuf> = vec![];
     let mut plugin_names: Vec<String> = vec![];
 
@@ -42,7 +117,10 @@ pub fn parse_cfg(cfg_path: PathBuf) -> Option<(Vec<PathBuf>, Vec<String>)> {
             }
         }
 
-        Some((data_dirs, plugin_names))
+        Some(ConfigInfo {
+            data: data_dirs,
+            plugins: plugin_names,
+        })
     } else {
         error!("Could not parse cfg file {}", cfg_path.display());
         None

@@ -48,15 +48,14 @@ impl TemplateApp {
                             // add to mods
                             if let Some(library) = self.mods_library.clone() {
                                 let mut install_path = Path::new(library.as_str()).join(filename);
-                                let mod_folder_name: String = filename.to_string_lossy().into();
 
                                 install_path.set_extension("");
                                 let mod_info = ModViewModel {
                                     enabled: false,
-                                    name: mod_folder_name.clone(),
+                                    full_name: install_path.clone(),
                                 };
 
-                                if !self.mods.iter().any(|e| e.name == mod_folder_name) {
+                                if !self.mods.iter().any(|e| e.full_name == install_path) {
                                     // TODO install mod
 
                                     self.mods.push(mod_info);

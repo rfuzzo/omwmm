@@ -1,10 +1,10 @@
 use std::{
-    env::consts::OS,
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
 };
 
+use common::{get_openmwcfg, get_plugins_in_folder};
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 
@@ -38,28 +38,6 @@ pub fn get_plugins(data_dirs: Vec<PathBuf>, plugin_names: &[String]) -> Vec<Path
         }
     }
     manifest
-}
-
-/// Get all plugins (esp, omwaddon, omwscripts) in a folder
-fn get_plugins_in_folder(path: &Path) -> Vec<PathBuf> {
-    // get all plugins
-    let mut results: Vec<PathBuf> = vec![];
-    if let Ok(plugins) = fs::read_dir(path) {
-        plugins.for_each(|p| {
-            if let Ok(file) = p {
-                let file_path = file.path();
-                if file_path.is_file() {
-                    if let Some(ext) = file_path.extension() {
-                        if ext == "esm" || ext == "esp" || ext == "omwaddon" || ext == "omwscripts"
-                        {
-                            results.push(file_path);
-                        }
-                    }
-                }
-            }
-        });
-    }
-    results
 }
 
 /// Copies files to out_path
@@ -103,51 +81,6 @@ pub fn copy_files(
     }
     manifest.files = result;
     manifest.existing_files = existing;
-}
-
-/// Returns the default openmw.cfg path if it exists, and None if not
-///
-/// # Panics
-///
-/// Panics if Home dir is not found in the OS
-fn get_openmwcfg() -> Option<PathBuf> {
-    let os_str = OS;
-    match os_str {
-        "linux" => {
-            // default cfg for linux is at $HOME/.config/openmw
-            let preference_dir = dirs::config_dir().unwrap();
-            let cfg = preference_dir.join("openmw.cfg");
-            if cfg.exists() {
-                Some(cfg)
-            } else {
-                None
-            }
-        }
-        "macos" => {
-            // default cfg for mac is at /Users/Username/Library/Preferences/openmw
-            let preference_dir = dirs::preference_dir().unwrap();
-            let cfg = preference_dir.join("openmw").join("openmw.cfg");
-            if cfg.exists() {
-                Some(cfg)
-            } else {
-                None
-            }
-        }
-        "windows" => {
-            // default cfg for windows is at C:\Users\Username\Documents\my games\openmw
-            let preference_dir = dirs::document_dir().unwrap();
-            let cfg = preference_dir
-                .join("my games")
-                .join("openmw")
-                .join("openmw.cfg");
-            if cfg.exists() {
-                Some(cfg)
-            } else {
-                None
-            }
-        }
-        _ => None,
-    }
 }
 
 /// Checks an input path and returns the default cfg if its not valid
@@ -205,14 +138,14 @@ pub fn export(
 
     // parse cfg for data dirs
     let result = common::parse_cfg(in_path);
-    let Some((data_dirs ,plugin_names)) = result else { return None; };
-    info!("Found {} data dirs", data_dirs.len());
-    info!("Found {} plugins", plugin_names.len());
+    let Some(info) = result else { return None; };
+    info!("Found {} data dirs", info.data.len());
+    info!("Found {} plugins", info.plugins.len());
 
     // create a manifest of files to copy
     info!("Creating manifest ...");
-    let plugins_to_copy = get_plugins(data_dirs, &plugin_names);
-    if plugins_to_copy.len() == plugin_names.len() {
+    let plugins_to_copy = get_plugins(info.data, &info.plugins);
+    if plugins_to_copy.len() == info.plugins.len() {
         info!("All plugins accounted for");
     } else {
         warn!("Not all content plugins found in the data directories!")
