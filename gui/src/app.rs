@@ -1,5 +1,5 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -18,6 +18,7 @@ pub struct TemplateApp {
     pub scale: EScale,
     #[serde(skip)]
     pub toasts: Toasts,
+
     // app
     /// the folder where mod archives are stored
     pub downloads_library: Option<String>,
@@ -31,8 +32,11 @@ pub struct TemplateApp {
     pub mods: Vec<ModInfo>,
 
     /// enabled plugins. this can be a list
+    #[serde(skip)]
     pub enabled_plugins: Vec<String>,
-    pub enabled_mods: Vec<String>,
+    #[serde(skip)]
+    pub init: bool,
+    pub current_profile: String,
 }
 
 impl Default for TemplateApp {
@@ -46,7 +50,8 @@ impl Default for TemplateApp {
             mods_library: None,
             mods: vec![],
             enabled_plugins: vec![],
-            enabled_mods: vec![],
+            init: false,
+            current_profile: "default".to_owned(),
         }
     }
 }
@@ -65,7 +70,6 @@ impl TemplateApp {
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
         }
-
         Default::default()
     }
 
@@ -153,14 +157,19 @@ impl TemplateApp {
                 }
 
                 // write data
-                for m in &self.enabled_mods {
-                    // TODO proper eol
-                    let data_line = format!("data=\"{}\"\n", m);
-                    match file.write(data_line.as_bytes()) {
-                        Ok(_) => {}
-                        Err(err) => warn!("Error writing plugin {}: {}", m, err),
+                if let Some(library) = self.mods_library.clone() {
+                    for m in &self.mods.iter().filter(|p| p.enabled).collect::<Vec<_>>() {
+                        // TODO proper eol
+                        // get full path
+                        let full_path = m.get_full_path(&library);
+                        let data_line = format!("data=\"{}\"\n", full_path.to_string_lossy());
+                        match file.write(data_line.as_bytes()) {
+                            Ok(_) => {}
+                            Err(err) => warn!("Error writing plugin {}: {}", m.name, err),
+                        }
                     }
                 }
+
                 // write plugins
                 for p in &self.enabled_plugins {
                     // TODO proper eol
@@ -177,5 +186,76 @@ impl TemplateApp {
         }
 
         false
+    }
+
+    /// Gets a path to the current profile dir and creates it if it doesn't exist
+    pub fn get_current_profile_dir(&self) -> PathBuf {
+        let current_profile_dir = dirs::config_dir()
+            .unwrap()
+            .join("omwmm")
+            .join("profiles")
+            .join(self.current_profile.as_str());
+        if !current_profile_dir.exists() {
+            fs::create_dir_all(&current_profile_dir).expect("Failed to create current profile dir");
+        }
+        current_profile_dir
+    }
+
+    /// initialize enabled mods and plugins from the current profile
+    /// this executes once on the first frame
+    /// TODO make this safer?
+    pub(crate) fn init_profile(&mut self) {
+        if self.init {
+            return;
+        }
+        // load the mod list and plugin list from the profiles folder
+        let current_profile_dir = self.get_current_profile_dir();
+        let mods_list_path = current_profile_dir.join("mods.txt");
+        if mods_list_path.exists() {
+            // load
+            if let Ok(lines) = read_lines(&mods_list_path) {
+                for mod_name in lines.flatten() {
+                    // TODO update mod enabled state
+                    if let Some(info) = self.mods.iter_mut().find(|p| p.name == mod_name) {
+                        info.enabled = true;
+                    }
+                }
+            }
+        }
+
+        let plugins_list_path = current_profile_dir.join("plugins.txt");
+        if plugins_list_path.exists() {
+            // load
+            if let Ok(lines) = read_lines(&plugins_list_path) {
+                self.enabled_plugins = lines.flatten().collect();
+            }
+        }
+
+        self.init = true;
+    }
+
+    /// serializes the mods to the profile
+    pub(crate) fn update_profile_mods(&self) {
+        let mods_names_list: Vec<_> = self
+            .mods
+            .iter()
+            .filter(|f| f.enabled)
+            .map(|e| format!("{}\n", e.name.clone()))
+            .collect();
+        // save the list to file
+        let current_profile_dir = self.get_current_profile_dir();
+        let mods_list_path = current_profile_dir.join("mods.txt");
+        if let Ok(mut f) = fs::File::create(mods_list_path) {
+            for mod_name in mods_names_list {
+                match f.write(mod_name.as_bytes()) {
+                    Ok(_) => {}
+                    Err(_err) => {
+                        // TODO logging
+                    }
+                }
+            }
+        } else {
+            // TODO logging
+        }
     }
 }

@@ -14,9 +14,10 @@ eframe = { version = "0.21.0", default-features = false, features = [
   "persistence",   # Enable restoring app state when restarting the app.
 ] }
 egui-notify = "0.6"
-rfd = { version = "0.11.0", features = ["file-handle-inner"] }
+rfd = { version = "0.11", features = ["file-handle-inner"] }
 serde = { version = "1", features = ["derive"] }
 catppuccin-egui = "2.0"
+egui_dnd = "0.3"
 tracing-subscriber = "0.3"
 dirs = "5.0"
 log = "0.4"

@@ -19,7 +19,7 @@ impl TemplateApp {
 
         // mods view
         // TODO the library path is useless if the mods are serialized :thonk:
-        if let Some(_library_path) = self.mods_library.clone() {
+        if let Some(library) = self.mods_library.clone() {
             // TODO mods view
             // this is the main view
             // it holds a list of installed mods (states of them vary per profile)
@@ -37,22 +37,30 @@ impl TemplateApp {
                             if ui.checkbox(&mut mod_info.enabled, "").changed() {
                                 is_any_changed = true;
                             }
-                            ui.label(mod_info.path.file_name().unwrap().to_string_lossy());
+                            ui.label(
+                                mod_info
+                                    .get_full_path(&library)
+                                    .file_name()
+                                    .unwrap()
+                                    .to_string_lossy(),
+                            );
                         })
                     });
                     r.response.context_menu(|ui| {
                         // uninstall mod
                         if ui.button("Uninstall").clicked() {
                             // TODO delete the mod from the mod library
-                            if mod_info.path.exists() {
-                                match std::fs::remove_dir_all(mod_info.path.as_path()) {
+                            if mod_info.get_full_path(&library).exists() {
+                                match std::fs::remove_dir_all(
+                                    mod_info.get_full_path(&library).as_path(),
+                                ) {
                                     Ok(_) => {
                                         self.toasts.success("Mod removed");
                                     }
                                     Err(err) => {
                                         log::error!(
                                             "failed to remove mod {}: {}",
-                                            mod_info.path.display(),
+                                            mod_info.get_full_path(&library).display(),
                                             err
                                         );
                                     }
@@ -76,12 +84,10 @@ impl TemplateApp {
 
             // update cfg
             if is_any_changed {
-                self.enabled_mods = self
-                    .mods
-                    .iter()
-                    .filter(|f| f.enabled)
-                    .map(|e| e.path.to_string_lossy().into_owned())
-                    .collect();
+                // update serialized mod list
+                self.update_profile_mods();
+
+                // update openmwcfg
                 self.update_cfg();
             }
         }

@@ -30,9 +30,23 @@ impl From<EScale> for f32 {
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct ModInfo {
-    pub path: PathBuf,
+    /// Mod name, to get the full path join this with the mod library
+    pub name: String,
+
+    // if a mod is enabled or not depends on the current profile
+    // do not serialize this centrally
+    #[serde(skip)]
     pub enabled: bool,
     // TODO files?
+}
+
+impl ModInfo {
+    pub fn get_full_path<P>(&self, library: &P) -> PathBuf
+    where
+        P: AsRef<Path>,
+    {
+        library.as_ref().join(self.name.clone())
+    }
 }
 
 /// Returns an Iterator to the Reader of the lines of the file.
