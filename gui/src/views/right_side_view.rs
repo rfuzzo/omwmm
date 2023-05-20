@@ -1,6 +1,6 @@
 use std::{path::Path, time::Duration};
 
-use crate::{ModInfo, TemplateApp};
+use crate::{ModViewModel, TemplateApp};
 
 impl TemplateApp {
     /// this view holds the downloads and esps
@@ -51,7 +51,7 @@ impl TemplateApp {
                                 let mod_folder_name: String = filename.to_string_lossy().into();
 
                                 install_path.set_extension("");
-                                let mod_info = ModInfo {
+                                let mod_info = ModViewModel {
                                     enabled: false,
                                     name: mod_folder_name.clone(),
                                 };

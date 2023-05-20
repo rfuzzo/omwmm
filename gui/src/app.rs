@@ -7,7 +7,7 @@ use std::{
 use egui_notify::Toasts;
 use log::{error, info, warn};
 
-use crate::{get_openmwcfg, read_lines, EScale, ModInfo};
+use crate::{get_openmwcfg, get_plugins_in_folder, EScale, ModViewModel, PluginViewModel};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -29,13 +29,13 @@ pub struct TemplateApp {
     /// the folder where mods are extracted to
     pub mods_library: Option<String>,
     /// info which mods are available
-    pub mods: Vec<ModInfo>,
-
-    /// enabled plugins. this can be a list
+    pub mods: Vec<ModViewModel>,
+    /// all plugins. should be populated on start
     #[serde(skip)]
-    pub enabled_plugins: Vec<String>,
+    pub plugins: Vec<PluginViewModel>,
     #[serde(skip)]
     pub init: bool,
+    ///
     pub current_profile: String,
 }
 
@@ -49,7 +49,7 @@ impl Default for TemplateApp {
             downloads: vec![],
             mods_library: None,
             mods: vec![],
-            enabled_plugins: vec![],
+            plugins: vec![],
             init: false,
             current_profile: "default".to_owned(),
         }
@@ -120,7 +120,7 @@ impl TemplateApp {
             // get everything that is not a content line
             info!("Parsing cfg {} ...", cfg_path.display());
             let mut original_cfg: Vec<String> = vec![];
-            if let Ok(lines) = read_lines(&cfg_path) {
+            if let Ok(lines) = common::read_lines(&cfg_path) {
                 for line in lines.flatten() {
                     // parse each line
                     if line.starts_with("data=") {
@@ -171,12 +171,17 @@ impl TemplateApp {
                 }
 
                 // write plugins
-                for p in &self.enabled_plugins {
+                for p in &self
+                    .plugins
+                    .iter()
+                    .filter(|p| p.enabled)
+                    .collect::<Vec<_>>()
+                {
                     // TODO proper eol
-                    let content_line = format!("content={}\n", p);
+                    let content_line = format!("content={}\n", p.name);
                     match file.write(content_line.as_bytes()) {
                         Ok(_) => {}
-                        Err(err) => warn!("Error writing plugin {}: {}", p, err),
+                        Err(err) => warn!("Error writing plugin {}: {}", p.name, err),
                     }
                 }
             } else {
@@ -208,14 +213,18 @@ impl TemplateApp {
         if self.init {
             return;
         }
+
+        // if the app mods are empty, we import the openmw.cfg
+        if self.mods.is_empty() {}
+
         // load the mod list and plugin list from the profiles folder
         let current_profile_dir = self.get_current_profile_dir();
         let mods_list_path = current_profile_dir.join("mods.txt");
         if mods_list_path.exists() {
             // load
-            if let Ok(lines) = read_lines(&mods_list_path) {
+            if let Ok(lines) = common::read_lines(&mods_list_path) {
                 for mod_name in lines.flatten() {
-                    // TODO update mod enabled state
+                    // update mods enabled state
                     if let Some(info) = self.mods.iter_mut().find(|p| p.name == mod_name) {
                         info.enabled = true;
                     }
@@ -223,11 +232,33 @@ impl TemplateApp {
             }
         }
 
+        // crawl mods and populate plugins list
+        self.plugins.clear();
+        for mod_info in self.mods.iter() {
+            if let Some(library) = self.mods_library.clone() {
+                let plugins = get_plugins_in_folder(&mod_info.get_full_path(&library));
+                for p in plugins {
+                    if let Some(plugin_name) = p.file_name() {
+                        self.plugins.push(PluginViewModel {
+                            name: plugin_name.to_string_lossy().into(),
+                            enabled: false,
+                        });
+                    } else {
+                        // TODO logging
+                    }
+                }
+            }
+        }
+        // update plugins enabled state
         let plugins_list_path = current_profile_dir.join("plugins.txt");
         if plugins_list_path.exists() {
             // load
-            if let Ok(lines) = read_lines(&plugins_list_path) {
-                self.enabled_plugins = lines.flatten().collect();
+            if let Ok(lines) = common::read_lines(&plugins_list_path) {
+                for plugin_name in lines.flatten() {
+                    if let Some(info) = self.plugins.iter_mut().find(|p| p.name == plugin_name) {
+                        info.enabled = true;
+                    }
+                }
             }
         }
 

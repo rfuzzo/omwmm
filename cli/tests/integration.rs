@@ -2,7 +2,8 @@
 mod integration_tests {
     use std::path::{Path, PathBuf};
 
-    use omw_util::{cleanup, copy_files, get_plugins, parse_cfg};
+    use common::parse_cfg;
+    use omw_util::{cleanup, copy_files, get_plugins};
     use omw_util::{export, import};
 
     // path, data dirs, plugins

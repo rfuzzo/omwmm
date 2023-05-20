@@ -1,6 +1,5 @@
 use std::{
-    fs::File,
-    io::{self, BufRead},
+    fs::{self},
     path::{Path, PathBuf},
 };
 
@@ -27,9 +26,15 @@ impl From<EScale> for f32 {
     }
 }
 
+#[derive(Default)]
+pub struct PluginViewModel {
+    pub name: String,
+    pub enabled: bool,
+}
+
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
-pub struct ModInfo {
+pub struct ModViewModel {
     /// Mod name, to get the full path join this with the mod library
     pub name: String,
 
@@ -39,23 +44,13 @@ pub struct ModInfo {
     pub enabled: bool,
     // TODO files?
 }
-
-impl ModInfo {
+impl ModViewModel {
     pub fn get_full_path<P>(&self, library: &P) -> PathBuf
     where
         P: AsRef<Path>,
     {
         library.as_ref().join(self.name.clone())
     }
-}
-
-/// Returns an Iterator to the Reader of the lines of the file.
-pub(crate) fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
 }
 
 /// Returns the default openmw.cfg path if it exists, and None if not
@@ -101,4 +96,29 @@ fn get_openmwcfg() -> Option<PathBuf> {
         }
         _ => None,
     }
+}
+
+/// Get all plugins (esp, omwaddon, omwscripts) in a folder
+fn get_plugins_in_folder<P>(path: &P) -> Vec<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    // get all plugins
+    let mut results: Vec<PathBuf> = vec![];
+    if let Ok(plugins) = fs::read_dir(path) {
+        plugins.for_each(|p| {
+            if let Ok(file) = p {
+                let file_path = file.path();
+                if file_path.is_file() {
+                    if let Some(ext) = file_path.extension() {
+                        if ext == "esm" || ext == "esp" || ext == "omwaddon" || ext == "omwscripts"
+                        {
+                            results.push(file_path);
+                        }
+                    }
+                }
+            }
+        });
+    }
+    results
 }

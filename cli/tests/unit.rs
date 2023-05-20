@@ -2,7 +2,8 @@
 mod unit_tests {
     use std::path::{Path, PathBuf};
 
-    use omw_util::{get_plugins, parse_cfg};
+    use common::parse_cfg;
+    use omw_util::get_plugins;
 
     fn get_cfg() -> (PathBuf, usize, usize) {
         (Path::new("tests/assets/openmw.cfg").into(), 3, 5)

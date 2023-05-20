@@ -1,2 +1,17 @@
 [workspace]
-members = ["cli", "gui"]
+members = ["common", "cli", "gui"]
+
+[workspace.dependencies]
+log = "0.4"
+simple_logger = "4.1"
+dirs = "5.0"
+serde = { version = "1", features = ["derive"] }
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2
+
+[patch.crates-io]
