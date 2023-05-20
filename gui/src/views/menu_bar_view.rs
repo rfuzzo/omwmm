@@ -1,4 +1,4 @@
-use crate::{EScale, TemplateApp};
+use crate::{app::ETheme, EScale, TemplateApp};
 
 impl TemplateApp {
     #[allow(unused_variables)] // for wasm
@@ -29,9 +29,9 @@ impl TemplateApp {
 
             // theme button on right
             ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
-                global_dark_light_mode_switch(ui, &mut self.light_mode);
-                ui.label("Theme: ");
-
+                // theme
+                theme_switch(ui, &mut self.theme);
+                // scale
                 egui::ComboBox::from_label("Scale: ")
                     .selected_text(format!("{:?}", self.scale))
                     .show_ui(ui, |ui| {
@@ -42,6 +42,19 @@ impl TemplateApp {
             });
         });
     }
+}
+
+fn theme_switch(ui: &mut egui::Ui, theme: &mut crate::app::ETheme) {
+    egui::ComboBox::from_label("Theme")
+        .selected_text(format!("{:?}", theme))
+        .show_ui(ui, |ui| {
+            ui.style_mut().wrap = Some(false);
+            ui.set_min_width(60.0);
+            ui.selectable_value(theme, ETheme::LATTE, "LATTE");
+            ui.selectable_value(theme, ETheme::FRAPPE, "FRAPPE");
+            ui.selectable_value(theme, ETheme::MACCHIATO, "MACCHIATO");
+            ui.selectable_value(theme, ETheme::MOCHA, "MOCHA");
+        });
 }
 
 // taken from egui

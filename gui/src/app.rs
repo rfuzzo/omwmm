@@ -10,17 +10,37 @@ use log::{error, info, warn};
 use crate::{EScale, ModViewModel, PluginViewModel};
 use common::{get_openmwcfg, get_plugins_in_folder};
 
+/// Tab Views
+#[derive(PartialEq)]
+pub enum ETabView {
+    Plugins,
+    Downloads,
+    Properties,
+    Settings,
+}
+
+/// Catpuccino themes
+#[derive(serde::Deserialize, serde::Serialize, PartialEq, Debug)]
+pub enum ETheme {
+    FRAPPE,
+    LATTE,
+    MACCHIATO,
+    MOCHA,
+}
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct TemplateApp {
     // ui
-    pub light_mode: bool,
+    pub theme: ETheme,
     pub scale: EScale,
     #[serde(skip)]
     pub toasts: Toasts,
 
     // app
+    #[serde(skip)]
+    pub current_tab_view: ETabView,
     /// the folder where mod archives are stored
     pub downloads_library: Option<String>,
     /// runtime cache of mod archive paths
@@ -43,9 +63,10 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            light_mode: false,
+            theme: ETheme::FRAPPE,
             scale: EScale::Small,
             toasts: Toasts::default(),
+            current_tab_view: ETabView::Plugins,
             downloads_library: None,
             downloads: vec![],
             mods_library: None,
@@ -86,7 +107,7 @@ impl TemplateApp {
         egui::SidePanel::right("side_panel")
             //.min_width(250_f32)
             .show(ctx, |ui| {
-                self.combined_side_view(ui);
+                self.right_side_view(ui);
             });
     }
 
@@ -216,16 +237,30 @@ impl TemplateApp {
             return;
         }
 
+        // fix broken links
+        if !self.mods.is_empty() {
+            let mut to_delete: Vec<_> = vec![];
+            for (i, m) in self.mods.iter().enumerate() {
+                if !m.full_name.exists() {
+                    to_delete.push(i);
+                }
+            }
+            for (j, _d) in to_delete.iter().enumerate() {
+                self.mods.remove(j);
+            }
+        }
         // if the app mods are empty, we import the openmw.cfg
         if self.mods.is_empty() {
             if let Some(cfg_path) = common::get_openmwcfg() {
                 if let Some(info) = common::parse_cfg(cfg_path) {
                     for data_path in info.data {
-                        // TODO handle vanilla dirs`
-                        self.mods.push(ModViewModel {
-                            full_name: data_path,
-                            enabled: false,
-                        })
+                        // TODO handle vanilla dirs
+                        if data_path.exists() {
+                            self.mods.push(ModViewModel {
+                                full_name: data_path,
+                                enabled: false,
+                            });
+                        }
                     }
                 }
             }

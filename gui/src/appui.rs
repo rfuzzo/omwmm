@@ -14,11 +14,7 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         ctx.set_pixels_per_point(f32::from(self.scale));
         // TODO themes
-        catppuccin_egui::set_theme(ctx, catppuccin_egui::FRAPPE);
-        // if light mode is requested but the app is in dark mode, we enable light mode
-        if self.light_mode && ctx.style().visuals.dark_mode {
-            ctx.set_visuals(egui::Visuals::light());
-        }
+        catppuccin_egui::set_theme(ctx, get_theme(&self.theme));
 
         self.init_profile();
 
@@ -50,5 +46,14 @@ impl eframe::App for TemplateApp {
 
         // notifications
         self.toasts.show(ctx);
+    }
+}
+
+fn get_theme(theme: &crate::app::ETheme) -> catppuccin_egui::Theme {
+    match theme {
+        crate::app::ETheme::FRAPPE => catppuccin_egui::FRAPPE,
+        crate::app::ETheme::LATTE => catppuccin_egui::LATTE,
+        crate::app::ETheme::MACCHIATO => catppuccin_egui::MACCHIATO,
+        crate::app::ETheme::MOCHA => catppuccin_egui::MOCHA,
     }
 }

@@ -3,12 +3,58 @@ use std::{path::Path, time::Duration};
 use crate::{ModViewModel, TemplateApp};
 
 impl TemplateApp {
-    /// this view holds the downloads and esps
-    pub fn combined_side_view(&mut self, ui: &mut egui::Ui) {
-        // TODO tabs
+    /// right panel
+    pub fn right_side_view(&mut self, ui: &mut egui::Ui) {
+        // Tab view
+        ui.horizontal(|ui| {
+            ui.selectable_value(
+                &mut self.current_tab_view,
+                crate::app::ETabView::Plugins,
+                "Plugins",
+            );
 
-        // downloads view
+            ui.selectable_value(
+                &mut self.current_tab_view,
+                crate::app::ETabView::Downloads,
+                "Downloads",
+            );
 
+            ui.selectable_value(
+                &mut self.current_tab_view,
+                crate::app::ETabView::Properties,
+                "Properties",
+            );
+
+            ui.selectable_value(
+                &mut self.current_tab_view,
+                crate::app::ETabView::Settings,
+                "Settings",
+            );
+        });
+
+        match self.current_tab_view {
+            crate::app::ETabView::Plugins => {
+                self.plugins_view(ui);
+            }
+            crate::app::ETabView::Downloads => {
+                self.downloads_view(ui);
+            }
+            crate::app::ETabView::Properties => {
+                self.properties_view(ui);
+            }
+            crate::app::ETabView::Settings => {
+                self.settings_view(ui);
+            }
+        }
+    }
+
+    /// list of plugins
+    pub fn plugins_view(&mut self, ui: &mut egui::Ui) {
+        ui.label("TODO");
+    }
+
+    /// list of mod packages
+    pub fn downloads_view(&mut self, ui: &mut egui::Ui) {
         // library folder path
         ui.horizontal(|ui| {
             if let Some(p) = self.downloads_library.clone() {
@@ -79,5 +125,15 @@ impl TemplateApp {
         // and can still individually be enabled
         // the enabled state is synced to the omw.cfg
         // TODO caching to avoid IO reads per frame?
+    }
+
+    /// mod property view
+    pub fn properties_view(&mut self, ui: &mut egui::Ui) {
+        ui.label("TODO");
+    }
+
+    /// app settings view
+    pub fn settings_view(&mut self, ui: &mut egui::Ui) {
+        ui.label("TODO");
     }
 }
