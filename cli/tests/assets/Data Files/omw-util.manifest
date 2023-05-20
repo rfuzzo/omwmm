@@ -1,0 +1,7 @@
+files = [
+    "tests/assets/Data Files/Morrowind.esm",
+    "tests/assets/Data Files/Tribunal.esm",
+    "tests/assets/Data Files/Bloodmoon.esm",
+    "tests/assets/Data Files/mod1.esp",
+    "tests/assets/Data Files/mod2.esp",
+]
