@@ -51,9 +51,9 @@ impl eframe::App for TemplateApp {
 
 fn get_theme(theme: &crate::app::ETheme) -> catppuccin_egui::Theme {
     match theme {
-        crate::app::ETheme::FRAPPE => catppuccin_egui::FRAPPE,
-        crate::app::ETheme::LATTE => catppuccin_egui::LATTE,
-        crate::app::ETheme::MACCHIATO => catppuccin_egui::MACCHIATO,
-        crate::app::ETheme::MOCHA => catppuccin_egui::MOCHA,
+        crate::app::ETheme::Frappe => catppuccin_egui::FRAPPE,
+        crate::app::ETheme::Latte => catppuccin_egui::LATTE,
+        crate::app::ETheme::Macchiato => catppuccin_egui::MACCHIATO,
+        crate::app::ETheme::Mocha => catppuccin_egui::MOCHA,
     }
 }

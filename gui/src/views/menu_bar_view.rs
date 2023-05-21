@@ -50,19 +50,9 @@ fn theme_switch(ui: &mut egui::Ui, theme: &mut crate::app::ETheme) {
         .show_ui(ui, |ui| {
             ui.style_mut().wrap = Some(false);
             ui.set_min_width(60.0);
-            ui.selectable_value(theme, ETheme::LATTE, "LATTE");
-            ui.selectable_value(theme, ETheme::FRAPPE, "FRAPPE");
-            ui.selectable_value(theme, ETheme::MACCHIATO, "MACCHIATO");
-            ui.selectable_value(theme, ETheme::MOCHA, "MOCHA");
+            ui.selectable_value(theme, ETheme::Latte, "LATTE");
+            ui.selectable_value(theme, ETheme::Frappe, "FRAPPE");
+            ui.selectable_value(theme, ETheme::Macchiato, "MACCHIATO");
+            ui.selectable_value(theme, ETheme::Mocha, "MOCHA");
         });
-}
-
-// taken from egui
-fn global_dark_light_mode_switch(ui: &mut egui::Ui, light_mode: &mut bool) {
-    let style: egui::Style = (*ui.ctx().style()).clone();
-    let new_visuals = style.visuals.light_dark_small_toggle_button(ui);
-    if let Some(visuals) = new_visuals {
-        *light_mode = !visuals.dark_mode;
-        ui.ctx().set_visuals(visuals);
-    }
 }

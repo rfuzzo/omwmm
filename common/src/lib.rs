@@ -77,7 +77,8 @@ where
             if let Ok(file) = p {
                 let file_path = file.path();
                 if file_path.is_file() {
-                    if let Some(ext) = file_path.extension() {
+                    if let Some(ext_os) = file_path.extension() {
+                        let ext = ext_os.to_ascii_lowercase();
                         if ext == "esm" || ext == "esp" || ext == "omwaddon" || ext == "omwscripts"
                         {
                             results.push(file_path);

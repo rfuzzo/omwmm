@@ -22,10 +22,10 @@ pub enum ETabView {
 /// Catpuccino themes
 #[derive(serde::Deserialize, serde::Serialize, PartialEq, Debug)]
 pub enum ETheme {
-    FRAPPE,
-    LATTE,
-    MACCHIATO,
-    MOCHA,
+    Frappe,
+    Latte,
+    Macchiato,
+    Mocha,
 }
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -63,7 +63,7 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         Self {
-            theme: ETheme::FRAPPE,
+            theme: ETheme::Frappe,
             scale: EScale::Small,
             toasts: Toasts::default(),
             current_tab_view: ETabView::Plugins,
