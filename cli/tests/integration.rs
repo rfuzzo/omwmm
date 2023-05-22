@@ -8,10 +8,10 @@ mod integration_tests {
 
     // path, data dirs, plugins
     fn get_cfg() -> (PathBuf, usize, usize) {
-        (Path::new("tests/assets/openmw.cfg").into(), 3, 5)
+        (Path::new("tests/assets/openmw.cfg").into(), 2, 2)
     }
     fn get_out_cfg() -> (PathBuf, usize, usize) {
-        (Path::new("tests/assets/openmw_out.cfg").into(), 2, 5)
+        (Path::new("tests/assets/openmw_out.cfg").into(), 2, 2)
     }
 
     fn setup_test_env(test_env: &Path) -> PathBuf {
@@ -25,7 +25,6 @@ mod integration_tests {
         data_files_path
     }
 
-    #[ignore]
     #[test]
     fn test_copy() {
         let test_env = Path::new("tests/integration/copy");
@@ -37,7 +36,7 @@ mod integration_tests {
         assert!(result.is_some());
         let Some(info) = result else { return };
         assert_eq!(info.data.len(), d);
-        assert_eq!(info.plugins.len(), c);
+        assert_eq!(info.plugins.len(), c); // hardcode this for now TODO
 
         // create a manifest
         let files = get_plugins(info.data, &info.plugins);

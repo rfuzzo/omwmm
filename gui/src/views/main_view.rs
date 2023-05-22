@@ -5,13 +5,14 @@ impl TemplateApp {
         // library folder path
         ui.horizontal(|ui| {
             if let Some(p) = self.mods_library.clone() {
-                ui.label(p.as_str());
+                ui.label(p.display().to_string());
             } else {
                 ui.label("Choose mod library path ...");
             }
             if ui.button("...").clicked() {
-                // TODO pick folder
-                self.mods_library = Some("/Users/ghost/Documents/omwmm/mods".into());
+                if let Some(folder) = rfd::FileDialog::new().set_directory("/").pick_folder() {
+                    self.mods_library = Some(folder);
+                }
             }
         });
 

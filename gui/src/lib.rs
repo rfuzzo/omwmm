@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum EScale {
+    Native,
     Small,
     Medium,
     Large,
@@ -16,6 +17,7 @@ pub enum EScale {
 impl From<EScale> for f32 {
     fn from(val: EScale) -> Self {
         match val {
+            EScale::Native => 1.2,
             EScale::Small => 2.2,
             EScale::Medium => 3.0,
             EScale::Large => 4.5,

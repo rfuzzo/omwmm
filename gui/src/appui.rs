@@ -12,8 +12,9 @@ impl eframe::App for TemplateApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // scale
         ctx.set_pixels_per_point(f32::from(self.scale));
-        // TODO themes
+        // themes
         catppuccin_egui::set_theme(ctx, get_theme(&self.theme));
 
         self.init_profile();

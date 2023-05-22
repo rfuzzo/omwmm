@@ -35,6 +35,7 @@ impl TemplateApp {
                 egui::ComboBox::from_label("Scale: ")
                     .selected_text(format!("{:?}", self.scale))
                     .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut self.scale, EScale::Native, "Native");
                         ui.selectable_value(&mut self.scale, EScale::Small, "Small");
                         ui.selectable_value(&mut self.scale, EScale::Medium, "Medium");
                         ui.selectable_value(&mut self.scale, EScale::Large, "Large");

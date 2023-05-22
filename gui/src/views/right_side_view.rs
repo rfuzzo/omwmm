@@ -1,4 +1,4 @@
-use std::{path::Path, time::Duration};
+use std::time::Duration;
 
 use crate::{ModViewModel, TemplateApp};
 
@@ -58,13 +58,14 @@ impl TemplateApp {
         // library folder path
         ui.horizontal(|ui| {
             if let Some(p) = self.downloads_library.clone() {
-                ui.label(p.as_str());
+                ui.label(p.display().to_string());
             } else {
                 ui.label("Choose library path ...");
             }
             if ui.button("...").clicked() {
-                // TODO pick folder
-                self.downloads_library = Some("/Users/ghost/Documents/omwmm/downloads".into());
+                if let Some(folder) = rfd::FileDialog::new().set_directory("/").pick_folder() {
+                    self.downloads_library = Some(folder);
+                }
             }
         });
 
@@ -93,7 +94,7 @@ impl TemplateApp {
                             // extract to mod lib
                             // add to mods
                             if let Some(library) = self.mods_library.clone() {
-                                let mut install_path = Path::new(library.as_str()).join(filename);
+                                let mut install_path = library.join(filename);
 
                                 install_path.set_extension("");
                                 let mod_info = ModViewModel {

@@ -6,7 +6,7 @@ mod unit_tests {
     use omw_util::get_plugins;
 
     fn get_cfg() -> (PathBuf, usize, usize) {
-        (Path::new("tests/assets/openmw.cfg").into(), 3, 5)
+        (Path::new("tests/assets/openmw.cfg").into(), 2, 2)
     }
     fn get_cfg_full() -> (PathBuf, usize, usize) {
         (Path::new("tests/assets/openmw_full.cfg").into(), 806, 578)

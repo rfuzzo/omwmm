@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::Write,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use egui_notify::Toasts;
@@ -42,13 +42,13 @@ pub struct TemplateApp {
     #[serde(skip)]
     pub current_tab_view: ETabView,
     /// the folder where mod archives are stored
-    pub downloads_library: Option<String>,
+    pub downloads_library: Option<PathBuf>,
     /// runtime cache of mod archive paths
     #[serde(skip)]
     pub downloads: Vec<PathBuf>,
 
     /// the folder where mods are extracted to
-    pub mods_library: Option<String>,
+    pub mods_library: Option<PathBuf>,
     /// info which mods are available
     pub mods: Vec<ModViewModel>,
     /// all plugins. should be populated on start
@@ -64,7 +64,7 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             theme: ETheme::Frappe,
-            scale: EScale::Small,
+            scale: EScale::Native,
             toasts: Toasts::default(),
             current_tab_view: ETabView::Plugins,
             downloads_library: None,
@@ -120,14 +120,12 @@ impl TemplateApp {
     // Logic
 
     /// refreshes the downloads list by walking the downloads library
-    pub fn refresh_downloads(&mut self, library_path: String) {
+    pub fn refresh_downloads(&mut self, library_path: PathBuf) {
         // TODO get files
         // TODO make proper viewmodels
         // TODO remove dbg
-        self.downloads
-            .push(Path::new(&library_path.as_str()).join("dbg1.zip"));
-        self.downloads
-            .push(Path::new(&library_path.as_str()).join("dbg2.zip"));
+        self.downloads.push(library_path.join("dbg1.zip"));
+        self.downloads.push(library_path.join("dbg2.zip"));
     }
 
     /// updates the openmw.cfg's content= and data= entries
