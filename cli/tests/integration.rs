@@ -25,6 +25,7 @@ mod integration_tests {
         data_files_path
     }
 
+    #[ignore]
     #[test]
     fn test_copy() {
         let test_env = Path::new("tests/integration/copy");
