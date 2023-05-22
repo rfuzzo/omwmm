@@ -282,33 +282,31 @@ impl TemplateApp {
             }
         }
 
-        // crawl mods and populate plugins list
+        // populate downloads
+        self.downloads.clear();
+        if let Some(downloads_path) = self.downloads_library.clone() {
+            refresh_downloads(downloads_path, &mut self.downloads);
+        }
+
         // populate plugins
         self.plugins.clear();
-        self.downloads.clear();
-
         for mod_info in self.mods.iter() {
-            if let Some(library) = self.mods_library.clone() {
-                // populate downloads
-                refresh_downloads(library, &mut self.downloads);
-
-                // populate plugins
-                let plugins = get_plugins_in_folder(&mod_info.full_name);
-                for p in plugins {
-                    if let Some(plugin_name) = p.file_name() {
-                        let vm = PluginViewModel {
-                            name: plugin_name.to_string_lossy().into(),
-                            enabled: false,
-                        };
-                        if !self.plugins.contains(&vm) {
-                            self.plugins.push(vm);
-                        }
-                    } else {
-                        warn!("Invalid filename: {}", p.display());
+            let plugins = get_plugins_in_folder(&mod_info.full_name);
+            for p in plugins {
+                if let Some(plugin_name) = p.file_name() {
+                    let vm = PluginViewModel {
+                        name: plugin_name.to_string_lossy().into(),
+                        enabled: false,
+                    };
+                    if !self.plugins.contains(&vm) {
+                        self.plugins.push(vm);
                     }
+                } else {
+                    warn!("Invalid filename: {}", p.display());
                 }
             }
         }
+
         // update plugins enabled state
         let plugins_list_path = current_profile_dir.join("plugins.txt");
         if plugins_list_path.exists() {
@@ -357,8 +355,8 @@ impl TemplateApp {
 fn refresh_downloads(library_path: PathBuf, downloads: &mut Vec<PathBuf>) {
     // TODO make proper viewmodels
     // get all plugins
-    if let Ok(plugins) = fs::read_dir(library_path) {
-        plugins.for_each(|p| {
+    if let Ok(archives) = fs::read_dir(library_path) {
+        archives.for_each(|p| {
             if let Ok(file) = p {
                 let file_path = file.path();
                 if file_path.is_file() {
