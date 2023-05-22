@@ -38,9 +38,12 @@ pub struct TemplateApp {
     pub scale: EScale,
     #[serde(skip)]
     pub toasts: Toasts,
-    // DragDropUi stores state about the currently dragged item
+    // DragDropUi stores state about the currently dragged mod
     #[serde(skip)]
-    pub dnd: DragDropUi,
+    pub dnd_mods: DragDropUi,
+    // DragDropUi stores state about the currently dragged plugin
+    #[serde(skip)]
+    pub dnd_plugins: DragDropUi,
 
     // app
     #[serde(skip)]
@@ -70,7 +73,8 @@ impl Default for TemplateApp {
             theme: ETheme::Frappe,
             scale: EScale::Native,
             toasts: Toasts::default(),
-            dnd: DragDropUi::default(),
+            dnd_mods: DragDropUi::default(),
+            dnd_plugins: DragDropUi::default(),
             current_tab_view: ETabView::Plugins,
             downloads_library: None,
             downloads: vec![],
@@ -123,15 +127,6 @@ impl TemplateApp {
     }
 
     // Logic
-
-    /// refreshes the downloads list by walking the downloads library
-    pub fn refresh_downloads(&mut self, library_path: PathBuf) {
-        // TODO get files
-        // TODO make proper viewmodels
-        // TODO remove dbg
-        self.downloads.push(library_path.join("dbg1.zip"));
-        self.downloads.push(library_path.join("dbg2.zip"));
-    }
 
     /// updates the openmw.cfg's content= and data= entries
     /// goes through the enabled mods and adds data= entries for each
@@ -234,7 +229,6 @@ impl TemplateApp {
 
     /// initialize enabled mods and plugins from the current profile
     /// this executes once on the first frame
-    /// TODO make this safer?
     pub(crate) fn init_profile(&mut self) {
         if self.init {
             return;
@@ -257,7 +251,7 @@ impl TemplateApp {
             if let Some(cfg_path) = common::get_openmwcfg() {
                 if let Some(info) = common::parse_cfg(cfg_path) {
                     for data_path in info.data {
-                        // TODO handle vanilla dirs
+                        // TODO handle vanilla dirs and special tags
                         if data_path.exists() {
                             self.mods.push(ModViewModel {
                                 full_name: data_path,
@@ -289,18 +283,28 @@ impl TemplateApp {
         }
 
         // crawl mods and populate plugins list
+        // populate plugins
         self.plugins.clear();
+        self.downloads.clear();
+
         for mod_info in self.mods.iter() {
-            if let Some(_library) = self.mods_library.clone() {
+            if let Some(library) = self.mods_library.clone() {
+                // populate downloads
+                refresh_downloads(library, &mut self.downloads);
+
+                // populate plugins
                 let plugins = get_plugins_in_folder(&mod_info.full_name);
                 for p in plugins {
                     if let Some(plugin_name) = p.file_name() {
-                        self.plugins.push(PluginViewModel {
+                        let vm = PluginViewModel {
                             name: plugin_name.to_string_lossy().into(),
                             enabled: false,
-                        });
+                        };
+                        if !self.plugins.contains(&vm) {
+                            self.plugins.push(vm);
+                        }
                     } else {
-                        // TODO logging
+                        warn!("Invalid filename: {}", p.display());
                     }
                 }
             }
@@ -315,6 +319,8 @@ impl TemplateApp {
                         info.enabled = true;
                     }
                 }
+            } else {
+                warn!("Could not read file: {}", plugins_list_path.display());
             }
         }
 
@@ -332,17 +338,40 @@ impl TemplateApp {
         // save the list to file
         let current_profile_dir = self.get_current_profile_dir();
         let mods_list_path = current_profile_dir.join("mods.txt");
-        if let Ok(mut f) = fs::File::create(mods_list_path) {
+        if let Ok(mut f) = fs::File::create(&mods_list_path) {
             for mod_name in mods_paths_list {
                 match f.write(mod_name.as_bytes()) {
                     Ok(_) => {}
                     Err(_err) => {
-                        // TODO logging
+                        warn!("Could not write line: {}", mod_name);
                     }
                 }
             }
         } else {
-            // TODO logging
+            warn!("Could not create file: {}", mods_list_path.display());
         }
+    }
+}
+
+/// refreshes the downloads list by walking the downloads library
+fn refresh_downloads(library_path: PathBuf, downloads: &mut Vec<PathBuf>) {
+    // TODO make proper viewmodels
+    // get all plugins
+    if let Ok(plugins) = fs::read_dir(library_path) {
+        plugins.for_each(|p| {
+            if let Ok(file) = p {
+                let file_path = file.path();
+                if file_path.is_file() {
+                    if let Some(ext_os) = file_path.extension() {
+                        let ext = ext_os.to_ascii_lowercase();
+                        if (ext == "zip" || ext == "7z" || ext == "rar")
+                            && !downloads.contains(&file_path)
+                        {
+                            downloads.push(file_path);
+                        }
+                    }
+                }
+            }
+        });
     }
 }

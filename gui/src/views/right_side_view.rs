@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use egui_dnd::utils::shift_vec;
+use log::warn;
 
 use crate::{ModViewModel, PluginViewModel, TemplateApp};
 
@@ -54,26 +55,29 @@ impl TemplateApp {
 
     /// list of plugins
     pub fn plugins_view(&mut self, ui: &mut egui::Ui) {
-        // a read-only but reorderable list of plugins
-        let response =
-                // make sure this is called in a vertical layout.
-                // Horizontal sorting is not supported yet.
-                self.dnd.ui::<PluginViewModel>(ui, self.plugins.iter_mut(), |item, ui, handle| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            // a read-only but reorderable list of plugins
+            let response = self.dnd_plugins.ui::<PluginViewModel>(
+                ui,
+                self.plugins.iter_mut(),
+                |item, ui, handle| {
                     ui.horizontal(|ui| {
                         // Anything in the handle can be used to drag the item
                         ui.checkbox(&mut item.enabled, "");
                         handle.ui(ui, item, |ui| {
                             ui.label(&item.name);
-                        });                        
+                        });
                     });
-                });
+                },
+            );
 
-        // After the drag is complete, we get a response containing the old index of the
-        // dragged item, as well as the index it was moved to. You can use the
-        // shift_vec function as a helper if you store your items in a Vec.
-        if let Some(response) = response.completed {
-            shift_vec(response.from, response.to, &mut self.plugins);
-        }
+            // After the drag is complete, we get a response containing the old index of the
+            // dragged item, as well as the index it was moved to. You can use the
+            // shift_vec function as a helper if you store your items in a Vec.
+            if let Some(response) = response.completed {
+                shift_vec(response.from, response.to, &mut self.plugins);
+            }
+        });
     }
 
     /// list of mod packages
@@ -95,14 +99,9 @@ impl TemplateApp {
         ui.separator();
 
         // downloads list
-        if let Some(library_path) = self.downloads_library.clone() {
-            // refresh downloads list
-            if self.downloads.is_empty() {
-                self.refresh_downloads(library_path);
-            }
+        if let Some(_library_path) = self.downloads_library.clone() {
             // populate list
             egui::ScrollArea::vertical().show(ui, |ui| {
-                // TODO use table
                 for path in self.downloads.iter() {
                     // create viewmodel
                     if let Some(filename) = path.file_name() {
@@ -127,6 +126,7 @@ impl TemplateApp {
 
                                 if !self.mods.iter().any(|e| e.full_name == install_path) {
                                     // TODO install mod
+                                    // support 7z, zip, rar
 
                                     self.mods.push(mod_info);
                                     self.toasts
@@ -134,30 +134,22 @@ impl TemplateApp {
                                         .set_duration(Some(Duration::from_secs(3)));
                                 }
                             } else {
-                                // TODO log
+                                warn!("No mod library found.")
                             }
                         }
                     }
                 }
             });
         }
-
-        // plugin view
-
-        // TODO plugin view
-        // plugins are assembled from the enabled mods
-        // and can still individually be enabled
-        // the enabled state is synced to the omw.cfg
-        // TODO caching to avoid IO reads per frame?
     }
 
     /// mod property view
     pub fn properties_view(&mut self, ui: &mut egui::Ui) {
-        ui.label("TODO");
+        ui.label("TODO mod properties");
     }
 
     /// app settings view
     pub fn settings_view(&mut self, ui: &mut egui::Ui) {
-        ui.label("TODO");
+        ui.label("TODO app settings");
     }
 }

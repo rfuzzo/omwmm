@@ -36,7 +36,7 @@ mod integration_tests {
         assert!(result.is_some());
         let Some(info) = result else { return };
         assert_eq!(info.data.len(), d);
-        assert_eq!(info.plugins.len(), c); // hardcode this for now TODO
+        assert_eq!(info.plugins.len(), c);
 
         // create a manifest
         let files = get_plugins(info.data, &info.plugins);

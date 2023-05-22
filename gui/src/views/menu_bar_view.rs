@@ -7,9 +7,12 @@ impl TemplateApp {
         egui::menu::bar(ui, |ui| {
             // FILE Menu
             ui.menu_button("File", |ui| {
-                // TODO install mod
+                if ui.button("Install Mod").clicked() {
+                    // TODO menu: install mod
+                }
 
                 ui.separator();
+
                 // Quit button
                 if ui.button("Quit").clicked() {
                     frame.close();
@@ -18,6 +21,18 @@ impl TemplateApp {
 
             // GAME menu
             ui.menu_button("Game", |ui| {
+                // star game
+                if ui.button("Start game").clicked() {
+                    // TODO menu: start game/launcher
+                }
+
+                ui.separator();
+
+                // open game folder
+                if ui.button("Open game directory").clicked() {
+                    // TODO menu: open game folder
+                }
+                // open cfg
                 if ui.button("Open config").clicked() {
                     if let Some(cfg_path) = common::get_openmwcfg() {
                         if open::that(cfg_path).is_err() {
@@ -27,7 +42,19 @@ impl TemplateApp {
                 }
             });
 
-            // theme button on right
+            // MODS Menu
+            ui.menu_button("Mods", |ui| {
+                // open mods folder
+                if ui.button("Open mods library").clicked() {
+                    // TODO menu: open mods folder
+                }
+                // open downloads folder
+                if ui.button("Open downloads library").clicked() {
+                    // TODO menu: open downloads folder
+                }
+            });
+
+            // right settings //TODO move to settings?
             ui.with_layout(egui::Layout::right_to_left(egui::Align::RIGHT), |ui| {
                 // theme
                 theme_switch(ui, &mut self.theme);

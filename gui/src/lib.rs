@@ -25,7 +25,7 @@ impl From<EScale> for f32 {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct PluginViewModel {
     pub name: String,
     pub enabled: bool,
@@ -47,7 +47,8 @@ pub struct ModViewModel {
     // do not serialize this centrally
     #[serde(skip)]
     pub enabled: bool,
-    // TODO files?
+    // TODO files
+    // TODO vanilla tag
 }
 // We need this to uniquely identify items. You can also implement the Hash trait.
 impl egui_dnd::DragDropItem for ModViewModel {
