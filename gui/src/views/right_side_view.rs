@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use crate::{ModViewModel, TemplateApp};
+use egui_dnd::utils::shift_vec;
+
+use crate::{ModViewModel, PluginViewModel, TemplateApp};
 
 impl TemplateApp {
     /// right panel
@@ -32,6 +34,8 @@ impl TemplateApp {
             );
         });
 
+        ui.separator();
+
         match self.current_tab_view {
             crate::app::ETabView::Plugins => {
                 self.plugins_view(ui);
@@ -50,7 +54,26 @@ impl TemplateApp {
 
     /// list of plugins
     pub fn plugins_view(&mut self, ui: &mut egui::Ui) {
-        ui.label("TODO");
+        // a read-only but reorderable list of plugins
+        let response =
+                // make sure this is called in a vertical layout.
+                // Horizontal sorting is not supported yet.
+                self.dnd.ui::<PluginViewModel>(ui, self.plugins.iter_mut(), |item, ui, handle| {
+                    ui.horizontal(|ui| {
+                        // Anything in the handle can be used to drag the item
+                        ui.checkbox(&mut item.enabled, "");
+                        handle.ui(ui, item, |ui| {
+                            ui.label(&item.name);
+                        });                        
+                    });
+                });
+
+        // After the drag is complete, we get a response containing the old index of the
+        // dragged item, as well as the index it was moved to. You can use the
+        // shift_vec function as a helper if you store your items in a Vec.
+        if let Some(response) = response.completed {
+            shift_vec(response.from, response.to, &mut self.plugins);
+        }
     }
 
     /// list of mod packages

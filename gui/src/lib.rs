@@ -30,6 +30,12 @@ pub struct PluginViewModel {
     pub name: String,
     pub enabled: bool,
 }
+// We need this to uniquely identify items. You can also implement the Hash trait.
+impl egui_dnd::DragDropItem for PluginViewModel {
+    fn id(&self) -> egui::Id {
+        egui::Id::new(&self.name)
+    }
+}
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -42,4 +48,10 @@ pub struct ModViewModel {
     #[serde(skip)]
     pub enabled: bool,
     // TODO files?
+}
+// We need this to uniquely identify items. You can also implement the Hash trait.
+impl egui_dnd::DragDropItem for ModViewModel {
+    fn id(&self) -> egui::Id {
+        egui::Id::new(&self.full_name)
+    }
 }

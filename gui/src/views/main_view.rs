@@ -1,4 +1,4 @@
-use crate::TemplateApp;
+use crate::{ModViewModel, TemplateApp};
 
 impl TemplateApp {
     pub fn main_view(&mut self, ui: &mut egui::Ui) {
@@ -30,44 +30,61 @@ impl TemplateApp {
 
             let mut is_any_changed = false;
             let mut to_delete: Vec<usize> = vec![];
-            // TODO use a table
-            egui::Grid::new("ui_mods").show(ui, |ui| {
-                for (i, mod_info) in self.mods.iter_mut().enumerate() {
-                    let r = ui.push_id(i, |ui| {
-                        ui.horizontal(|ui| {
-                            if ui.checkbox(&mut mod_info.enabled, "").changed() {
-                                is_any_changed = true;
-                            }
-                            ui.label(mod_info.full_name.file_name().unwrap().to_string_lossy());
-                        })
-                    });
-                    r.response.context_menu(|ui| {
-                        // uninstall mod
-                        if ui.button("Uninstall").clicked() {
-                            // TODO delete the mod from the mod library
-                            if mod_info.full_name.exists() {
-                                match std::fs::remove_dir_all(&mod_info.full_name) {
-                                    Ok(_) => {
-                                        self.toasts.success("Mod removed");
-                                    }
-                                    Err(err) => {
-                                        log::error!(
-                                            "failed to remove mod {}: {}",
-                                            mod_info.full_name.display(),
-                                            err
-                                        );
-                                    }
+
+            let mut i = 0;
+            let response =
+            // make sure this is called in a vertical layout.
+            // Horizontal sorting is not supported yet.
+            self.dnd.ui::<ModViewModel>(ui, self.mods.iter_mut(), |mod_info, ui, handle| {
+                // the list item view 
+                ui.horizontal(|ui| {
+                  let r = ui.push_id(&mod_info.full_name.clone(), |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.checkbox(&mut mod_info.enabled, "").changed() {
+                            is_any_changed = true;
+                        }
+                        // Anything in the handle can be used to drag the item
+                        handle.ui(ui, mod_info, |ui| {
+                          ui.label(mod_info.full_name.file_name().unwrap().to_string_lossy());
+                        });
+                    })
+                });
+                // context menu
+                r.response.context_menu(|ui| {
+                    // uninstall mod
+                    if ui.button("Uninstall").clicked() {
+                        // TODO delete the mod from the mod library
+                        if mod_info.full_name.exists() {
+                            match std::fs::remove_dir_all(&mod_info.full_name) {
+                                Ok(_) => {
+                                    self.toasts.success("Mod removed");
+                                }
+                                Err(err) => {
+                                    log::error!(
+                                        "failed to remove mod {}: {}",
+                                        mod_info.full_name.display(),
+                                        err
+                                    );
                                 }
                             }
-
-                            // remove the mod from the list
-                            to_delete.push(i);
-                            ui.close_menu();
                         }
-                    });
-                    ui.end_row();
-                }
+
+                        // remove the mod from the list
+                        to_delete.push(i);
+                        ui.close_menu();
+                    }
+                });
+              });
+
+              i+=1;
             });
+
+            // After the drag is complete, we get a response containing the old index of the
+            // dragged item, as well as the index it was moved to. You can use the
+            // shift_vec function as a helper if you store your items in a Vec.
+            if let Some(response) = response.completed {
+                egui_dnd::utils::shift_vec(response.from, response.to, &mut self.mods);
+            }
 
             // delete mods
             for idx in to_delete {

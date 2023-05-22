@@ -4,6 +4,7 @@ use std::{
     path::PathBuf,
 };
 
+use egui_dnd::DragDropUi;
 use egui_notify::Toasts;
 use log::{error, info, warn};
 
@@ -37,6 +38,9 @@ pub struct TemplateApp {
     pub scale: EScale,
     #[serde(skip)]
     pub toasts: Toasts,
+    // DragDropUi stores state about the currently dragged item
+    #[serde(skip)]
+    pub dnd: DragDropUi,
 
     // app
     #[serde(skip)]
@@ -66,6 +70,7 @@ impl Default for TemplateApp {
             theme: ETheme::Frappe,
             scale: EScale::Native,
             toasts: Toasts::default(),
+            dnd: DragDropUi::default(),
             current_tab_view: ETabView::Plugins,
             downloads_library: None,
             downloads: vec![],
@@ -105,7 +110,7 @@ impl TemplateApp {
 
     pub fn update_right_side_panel(&mut self, ctx: &egui::Context) {
         egui::SidePanel::right("side_panel")
-            //.min_width(250_f32)
+            .min_width(300_f32)
             .show(ctx, |ui| {
                 self.right_side_view(ui);
             });
