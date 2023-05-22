@@ -66,7 +66,7 @@ pub fn get_openmwcfg() -> Option<PathBuf> {
 }
 
 /// Get all plugins (esp, omwaddon, omwscripts) in a folder
-pub fn get_plugins_in_folder<P>(path: &P) -> Vec<PathBuf>
+pub fn get_plugins_in_folder<P>(path: &P, use_omw_plugins: bool) -> Vec<PathBuf>
 where
     P: AsRef<Path>,
 {
@@ -79,7 +79,10 @@ where
                 if file_path.is_file() {
                     if let Some(ext_os) = file_path.extension() {
                         let ext = ext_os.to_ascii_lowercase();
-                        if ext == "esm" || ext == "esp" || ext == "omwaddon" || ext == "omwscripts"
+                        if ext == "esm"
+                            || ext == "esp"
+                            || (use_omw_plugins && ext == "omwaddon")
+                            || (use_omw_plugins && ext == "omwscripts")
                         {
                             results.push(file_path);
                         }

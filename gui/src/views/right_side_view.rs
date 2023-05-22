@@ -95,38 +95,33 @@ impl TemplateApp {
         egui::ScrollArea::vertical().show(ui, |ui| {
             for path in self.downloads.iter() {
                 // create viewmodel
-                if let Some(filename) = path.file_name() {
-                    if ui
-                        .add(
-                            egui::Label::new(filename.to_string_lossy())
-                                .sense(egui::Sense::click()),
-                        )
-                        .double_clicked()
-                    {
-                        // install mod
-                        // extract to mod lib
-                        // add to mods
-                        if let Some(library) = self.mods_library.clone() {
-                            let mut install_path = library.join(filename);
+                if ui
+                    .add(egui::Label::new(&path.file_name).sense(egui::Sense::click()))
+                    .double_clicked()
+                {
+                    // install mod
+                    // extract to mod lib
+                    // add to mods
+                    if let Some(library) = self.mods_library.clone() {
+                        let mut install_path = library.join(&path.file_name);
 
-                            install_path.set_extension("");
-                            let mod_info = ModViewModel {
-                                enabled: false,
-                                full_name: install_path.clone(),
-                            };
+                        install_path.set_extension("");
+                        let mod_info = ModViewModel {
+                            enabled: false,
+                            full_name: install_path.clone(),
+                        };
 
-                            if !self.mods.iter().any(|e| e.full_name == install_path) {
-                                // TODO install mod
-                                // support 7z, zip, rar
+                        if !self.mods.iter().any(|e| e.full_name == install_path) {
+                            // TODO install mod
+                            // support 7z, zip, rar
 
-                                self.mods.push(mod_info);
-                                self.toasts
-                                    .success("Mod installed")
-                                    .set_duration(Some(Duration::from_secs(3)));
-                            }
-                        } else {
-                            warn!("No mod library found.")
+                            self.mods.push(mod_info);
+                            self.toasts
+                                .success("Mod installed")
+                                .set_duration(Some(Duration::from_secs(3)));
                         }
+                    } else {
+                        warn!("No mod library found.")
                     }
                 }
             }

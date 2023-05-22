@@ -8,7 +8,7 @@ use egui_dnd::DragDropUi;
 use egui_notify::Toasts;
 use log::{error, info, warn};
 
-use crate::{EScale, ModViewModel, PluginViewModel};
+use crate::{ArchiveViewModel, EScale, ModNexusMetaData, ModViewModel, PluginViewModel};
 use common::{get_openmwcfg, get_plugins_in_folder};
 
 /// Tab Views
@@ -52,7 +52,7 @@ pub struct TemplateApp {
     pub downloads_library: Option<PathBuf>,
     /// runtime cache of mod archive paths
     #[serde(skip)]
-    pub downloads: Vec<PathBuf>,
+    pub downloads: Vec<ArchiveViewModel>,
 
     /// the folder where mods are extracted to
     pub mods_library: Option<PathBuf>,
@@ -291,7 +291,7 @@ impl TemplateApp {
         // populate plugins
         self.plugins.clear();
         for mod_info in self.mods.iter() {
-            let plugins = get_plugins_in_folder(&mod_info.full_name);
+            let plugins = get_plugins_in_folder(&mod_info.full_name, true);
             for p in plugins {
                 if let Some(plugin_name) = p.file_name() {
                     let vm = PluginViewModel {
@@ -352,7 +352,7 @@ impl TemplateApp {
 }
 
 /// refreshes the downloads list by walking the downloads library
-fn refresh_downloads(library_path: PathBuf, downloads: &mut Vec<PathBuf>) {
+fn refresh_downloads(library_path: PathBuf, downloads: &mut Vec<ArchiveViewModel>) {
     // TODO make proper viewmodels
     // get all plugins
     if let Ok(archives) = fs::read_dir(library_path) {
@@ -362,14 +362,55 @@ fn refresh_downloads(library_path: PathBuf, downloads: &mut Vec<PathBuf>) {
                 if file_path.is_file() {
                     if let Some(ext_os) = file_path.extension() {
                         let ext = ext_os.to_ascii_lowercase();
-                        if (ext == "zip" || ext == "7z" || ext == "rar")
-                            && !downloads.contains(&file_path)
-                        {
-                            downloads.push(file_path);
+                        if ext == "zip" || ext == "7z" || ext == "rar" {
+                            // check metadata
+                            let mut meta_path = file_path.clone();
+                            let meta_ext = format!("{}.meta", ext_os.to_str().unwrap());
+                            meta_path.set_extension(meta_ext);
+
+                            let mut meta_data: Option<ModNexusMetaData> = None;
+                            if meta_path.exists() {
+                                meta_data = parse_mod_meta(meta_path);
+                            }
+
+                            let vm = ArchiveViewModel {
+                                file_name: file_path.file_name().unwrap().to_string_lossy().into(),
+                                //installed: false,
+                                meta_data,
+                            };
+                            downloads.push(vm);
                         }
                     }
                 }
             }
         });
     }
+}
+
+/// parses an MO2 mod meta file
+/// TODO cache this
+fn parse_mod_meta(meta_path: PathBuf) -> Option<ModNexusMetaData> {
+    if let Ok(lines) = common::read_lines(&meta_path) {
+        let mut meta = ModNexusMetaData::default();
+        for line in lines.flatten() {
+            if let Some(mod_id) = line.strip_prefix("modID=") {
+                if let Ok(id) = mod_id.parse() {
+                    meta.mod_id = Some(id);
+                }
+            }
+            if let Some(description) = line.strip_prefix("description=") {
+                meta.description = Some(description.to_owned());
+            }
+            if let Some(mod_name) = line.strip_prefix("modName=") {
+                meta.mod_name = Some(mod_name.to_owned());
+            }
+            if let Some(version) = line.strip_prefix("version=") {
+                meta.version = Some(version.to_owned());
+            }
+        }
+        return Some(meta);
+    } else {
+        warn!("Could not read meta file: {}", meta_path.display());
+    }
+    None
 }

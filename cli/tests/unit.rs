@@ -42,7 +42,7 @@ mod unit_tests {
         assert_eq!(info.data.len(), d);
         assert_eq!(info.plugins.len(), c);
         // create a manifest
-        let files = get_plugins(info.data, &info.plugins);
+        let files = get_plugins(info.data, &info.plugins, true);
         assert_eq!(files.len(), info.plugins.len());
     }
 }

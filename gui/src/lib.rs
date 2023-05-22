@@ -56,3 +56,20 @@ impl egui_dnd::DragDropItem for ModViewModel {
         egui::Id::new(&self.full_name)
     }
 }
+
+#[derive(Default)]
+pub struct ArchiveViewModel {
+    pub file_name: String,
+    //pub installed: bool,
+
+    // nexus metadata
+    pub meta_data: Option<ModNexusMetaData>,
+}
+
+#[derive(Default, serde::Serialize, serde::Deserialize, Debug)]
+pub struct ModNexusMetaData {
+    pub mod_id: Option<usize>,
+    pub description: Option<String>,
+    pub mod_name: Option<String>,
+    pub version: Option<String>,
+}

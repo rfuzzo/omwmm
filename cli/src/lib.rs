@@ -19,11 +19,15 @@ pub struct Manifest {
 /// # Panics
 ///
 /// Panics if a filename can't be read
-pub fn get_plugins(data_dirs: Vec<PathBuf>, plugin_names: &[String]) -> Vec<PathBuf> {
+pub fn get_plugins(
+    data_dirs: Vec<PathBuf>,
+    plugin_names: &[String],
+    use_omw_plugins: bool,
+) -> Vec<PathBuf> {
     let mut manifest: Vec<PathBuf> = vec![];
     for path in data_dirs {
         if path.exists() {
-            let files = get_plugins_in_folder(&path);
+            let files = get_plugins_in_folder(&path, use_omw_plugins);
             for file_path in files {
                 // check if the plugin is in the active plugins list
                 // rust wtf :hidethepain:
@@ -114,6 +118,7 @@ pub fn export(
     cfg_path_option: Option<PathBuf>,
     out_path_option: Option<PathBuf>,
     verbose: bool,
+    use_omw_plugins: bool,
 ) -> Option<usize> {
     // checks
     let in_path = match check_cfg_path(cfg_path_option) {
@@ -144,7 +149,7 @@ pub fn export(
 
     // create a manifest of files to copy
     info!("Creating manifest ...");
-    let plugins_to_copy = get_plugins(info.data, &info.plugins);
+    let plugins_to_copy = get_plugins(info.data, &info.plugins, use_omw_plugins);
     if plugins_to_copy.len() == info.plugins.len() {
         info!("All plugins accounted for");
     } else {
@@ -320,7 +325,7 @@ pub fn import(data_files_opt: Option<PathBuf>, cfg_opt: Option<PathBuf>, clean: 
     };
 
     // gets all plugins and sort them by modification time
-    let mut all_plugins = get_plugins_in_folder(&data_files_path);
+    let mut all_plugins = get_plugins_in_folder(&data_files_path, true);
     // sort
     all_plugins.sort_by(|a, b| {
         fs::metadata(a)

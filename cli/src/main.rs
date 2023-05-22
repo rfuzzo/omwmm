@@ -27,6 +27,10 @@ enum Commands {
         /// The path to the openmw.cfg, default is openMWs's default location
         #[arg(short, long)]
         config: Option<PathBuf>,
+
+        /// Export omwaddons and omwscripts, default is false
+        #[arg(long)]
+        omwplugins: bool,
     },
     /// Cleans up a directory with a valid omw-util.manifest file
     Cleanup {
@@ -57,8 +61,12 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
 
     match &cli.command {
-        Some(Commands::Export { config, dir }) => {
-            let _result = export(dir.to_owned(), config.to_owned(), cli.verbose);
+        Some(Commands::Export {
+            config,
+            dir,
+            omwplugins,
+        }) => {
+            let _result = export(dir.to_owned(), config.to_owned(), cli.verbose, *omwplugins);
             ExitCode::SUCCESS
         }
         Some(Commands::Import {

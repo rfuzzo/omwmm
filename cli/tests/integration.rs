@@ -39,7 +39,7 @@ mod integration_tests {
         assert_eq!(info.plugins.len(), c);
 
         // create a manifest
-        let files = get_plugins(info.data, &info.plugins);
+        let files = get_plugins(info.data, &info.plugins, true);
         assert_eq!(files.len(), info.plugins.len());
 
         // now copy the actual files
@@ -60,7 +60,12 @@ mod integration_tests {
         let data_files_path = setup_test_env(test_env);
         let (config_path, _d, c) = get_cfg();
 
-        let result = export(Some(config_path), Some(data_files_path.to_owned()), false);
+        let result = export(
+            Some(config_path),
+            Some(data_files_path.to_owned()),
+            false,
+            true,
+        );
         assert_eq!(result, Some(c));
 
         // check order
@@ -78,7 +83,12 @@ mod integration_tests {
         let data_files_path = setup_test_env(test_env);
         let (config_path, _d, c) = get_cfg();
         // export to set up test
-        let result = export(Some(config_path), Some(data_files_path.clone()), false);
+        let result = export(
+            Some(config_path),
+            Some(data_files_path.clone()),
+            false,
+            true,
+        );
         assert_eq!(result, Some(c));
 
         // modify a file to test import
