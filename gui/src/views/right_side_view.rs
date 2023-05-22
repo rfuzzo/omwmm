@@ -55,6 +55,9 @@ impl TemplateApp {
 
     /// list of plugins
     pub fn plugins_view(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Plugins");
+        ui.separator();
+
         egui::ScrollArea::vertical().show(ui, |ui| {
             // a read-only but reorderable list of plugins
             let response = self.dnd_plugins.ui::<PluginViewModel>(
@@ -82,13 +85,95 @@ impl TemplateApp {
 
     /// list of mod packages
     pub fn downloads_view(&mut self, ui: &mut egui::Ui) {
-        // library folder path
+        ui.heading("Archives");
+        ui.separator();
+
+        // check
+        let Some(_library_path) = self.downloads_library.clone() else { return };
+
+        // downloads list
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            for path in self.downloads.iter() {
+                // create viewmodel
+                if let Some(filename) = path.file_name() {
+                    if ui
+                        .add(
+                            egui::Label::new(filename.to_string_lossy())
+                                .sense(egui::Sense::click()),
+                        )
+                        .double_clicked()
+                    {
+                        // install mod
+                        // extract to mod lib
+                        // add to mods
+                        if let Some(library) = self.mods_library.clone() {
+                            let mut install_path = library.join(filename);
+
+                            install_path.set_extension("");
+                            let mod_info = ModViewModel {
+                                enabled: false,
+                                full_name: install_path.clone(),
+                            };
+
+                            if !self.mods.iter().any(|e| e.full_name == install_path) {
+                                // TODO install mod
+                                // support 7z, zip, rar
+
+                                self.mods.push(mod_info);
+                                self.toasts
+                                    .success("Mod installed")
+                                    .set_duration(Some(Duration::from_secs(3)));
+                            }
+                        } else {
+                            warn!("No mod library found.")
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /// mod property view
+    pub fn properties_view(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Info");
+        ui.separator();
+
+        ui.label("TODO mod properties");
+    }
+
+    /// app settings view
+    pub fn settings_view(&mut self, ui: &mut egui::Ui) {
+        ui.heading("Settings");
+        ui.separator();
+
+        // mod library folder path
         ui.horizontal(|ui| {
+            ui.label("Mods library: ");
+
+            if let Some(p) = self.mods_library.clone() {
+                ui.label(p.display().to_string());
+            } else {
+                ui.label("Choose mod library path ...");
+            }
+            if ui.button("...").clicked() {
+                if let Some(folder) = rfd::FileDialog::new().set_directory("/").pick_folder() {
+                    self.mods_library = Some(folder);
+                }
+            }
+        });
+
+        ui.separator();
+
+        // downloads library folder path
+        ui.horizontal(|ui| {
+            ui.label("Downloads library: ");
+
             if let Some(p) = self.downloads_library.clone() {
                 ui.label(p.display().to_string());
             } else {
                 ui.label("Choose library path ...");
             }
+
             if ui.button("...").clicked() {
                 if let Some(folder) = rfd::FileDialog::new().set_directory("/").pick_folder() {
                     self.downloads_library = Some(folder);
@@ -97,59 +182,5 @@ impl TemplateApp {
         });
 
         ui.separator();
-
-        // downloads list
-        if let Some(_library_path) = self.downloads_library.clone() {
-            // populate list
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                for path in self.downloads.iter() {
-                    // create viewmodel
-                    if let Some(filename) = path.file_name() {
-                        if ui
-                            .add(
-                                egui::Label::new(filename.to_string_lossy())
-                                    .sense(egui::Sense::click()),
-                            )
-                            .double_clicked()
-                        {
-                            // install mod
-                            // extract to mod lib
-                            // add to mods
-                            if let Some(library) = self.mods_library.clone() {
-                                let mut install_path = library.join(filename);
-
-                                install_path.set_extension("");
-                                let mod_info = ModViewModel {
-                                    enabled: false,
-                                    full_name: install_path.clone(),
-                                };
-
-                                if !self.mods.iter().any(|e| e.full_name == install_path) {
-                                    // TODO install mod
-                                    // support 7z, zip, rar
-
-                                    self.mods.push(mod_info);
-                                    self.toasts
-                                        .success("Mod installed")
-                                        .set_duration(Some(Duration::from_secs(3)));
-                                }
-                            } else {
-                                warn!("No mod library found.")
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    /// mod property view
-    pub fn properties_view(&mut self, ui: &mut egui::Ui) {
-        ui.label("TODO mod properties");
-    }
-
-    /// app settings view
-    pub fn settings_view(&mut self, ui: &mut egui::Ui) {
-        ui.label("TODO app settings");
     }
 }
