@@ -65,6 +65,13 @@ impl TemplateApp {
                                         }
                                     }
                                 }
+
+                                ui.separator();
+
+                                // open mod folder
+                                if ui.button("Open folder").clicked() {
+                                    // TODO open folder
+                                }
                             });
                         });
 
