@@ -16,15 +16,16 @@ serde = { workspace = true }
 
 toml = "0.7"
 
-egui = "0.21.0"
-eframe = { version = "0.21.0", default-features = false, features = [
+egui = "0.22"
+eframe = { version = "0.22", default-features = false, features = [
   "default_fonts", # Embed the default egui fonts.
   "glow",          # Use the glow rendering backend. Alternative: "wgpu".
   "persistence",   # Enable restoring app state when restarting the app.
 ] }
-egui-notify = "0.6"
+egui-notify = { git = "https://github.com/ItsEthra/egui-notify" }
+catppuccin-egui = "3.0"
+egui_dnd = { git = "https://github.com/rfuzzo/egui_dnd", branch = "feature/egui-update" }
+
 rfd = { version = "0.11", features = ["file-handle-inner"] }
-catppuccin-egui = "2.0"
-egui_dnd = "0.3"
 tracing-subscriber = "0.3"
 open = "4.1"
