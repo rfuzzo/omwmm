@@ -24,8 +24,8 @@ eframe = { version = "0.22", default-features = false, features = [
 ] }
 egui-notify = { git = "https://github.com/ItsEthra/egui-notify" }
 catppuccin-egui = "3.0"
-egui_dnd = { git = "https://github.com/rfuzzo/egui_dnd", branch = "feature/egui-update" }
+egui_dnd = "0.4"
 
 rfd = { version = "0.11", features = ["file-handle-inner"] }
 tracing-subscriber = "0.3"
-open = "4.1"
+open = "5.0"
